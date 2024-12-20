@@ -1,0 +1,69 @@
+package org.example;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.time.LocalDate;
+import static org.junit.jupiter.api.Assertions.*;
+
+class FinanceReportProcessorTest {
+    private Payments[] payments;
+    private FinanceReports report;
+
+    @BeforeEach
+    void setUp() {
+        Payments payment1 = new Payments("Иванов Иван Иванович", 15, 3, 2023, 15000);
+        Payments payment2 = new Payments("Петров Петр Петрович", 20, 3, 2023, 20000);
+        payments = new Payments[]{payment1, payment2};
+        report = new FinanceReports(payments, "Сидоров Сидор Сидорович", LocalDate.now());
+    }
+
+    @Test
+    void testGetTotalPaymentsOnDate_ValidDate() {
+        int total = FinanceReportProcessor.getTotalPaymentsOnDate(report, "15.03.23");
+        assertEquals(15000, total);
+    }
+
+    @Test
+    void testGetTotalPaymentsOnDate_NoPayments() {
+        int total = FinanceReportProcessor.getTotalPaymentsOnDate(report, "16.03.23");
+        assertEquals(0, total);
+    }
+
+    @Test
+    void testGetTotalPaymentsOnDate_InvalidDateFormat() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            FinanceReportProcessor.getTotalPaymentsOnDate(report, "2023-03-15");
+        });
+    }
+
+    @Test
+    void testGetMonthsWithNoPaymentsInYear_AllMonthsWithPayments() {
+        List<String> emptyMonths = FinanceReportProcessor.getMonthsWithNoPaymentsInYear(report, 2023);
+        assertTrue(emptyMonths.isEmpty());
+    }
+
+    @Test
+    void testGetMonthsWithNoPaymentsInYear_SomeMonthsWithoutPayments() {
+        Payments payment1 = new Payments("Иванов Иван Иванович", 15, 3, 2023, 15000);
+        Payments payment2 = new Payments("Петров Петр Петрович", 20, 3, 2023, 20000);
+        Payments payment3 = new Payments("Сидоров Сидор Сидорович", 1, 1, 2023, 5000);
+        payments = new Payments[]{payment1, payment2, payment3};
+        report = new FinanceReports(payments, "Сидоров Сидор Сидорович", LocalDate.now());
+
+        List<String> emptyMonths = FinanceReportProcessor.getMonthsWithNoPaymentsInYear(report, 2023);
+        assertEquals(9, emptyMonths.size());
+        assertTrue(emptyMonths.contains("Февраль"));
+        assertTrue(emptyMonths.contains("Апрель"));
+    }
+
+    @Test
+    void testGetMonthsWithNoPaymentsInYear_AllMonthsWithoutPayments() {
+        Payments payment1 = new Payments("Иванов Иван Иванович", 15, 7, 2023, 15000);
+        payments = new Payments[]{payment1};
+        report = new FinanceReports(payments, "Сидоров Сидор Сидорович", LocalDate.now());
+
+        List<String> emptyMonths = FinanceReportProcessor.getMonthsWithNoPaymentsInYear(report, 2023);
+        assertEquals(11, emptyMonths.size());
+    }
+}
